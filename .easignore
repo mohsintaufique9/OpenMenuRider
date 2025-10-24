@@ -1,8 +1,15 @@
-# Ignore parent directories that contain large files
-../../
+# Only include essential project files
+# Exclude everything else
+
+# Exclude parent directories
+../*
 ../../*
 
-# Ignore large media files
+# Exclude Downloads folder entirely
+/Users/hhtraders/Downloads/*
+/Users/hhtraders/Downloads/**
+
+# Exclude any large media files
 *.mkv
 *.mp4
 *.avi
@@ -12,33 +19,34 @@
 *.webm
 *.m4v
 *.3gp
+*.mp3
+*.wav
+*.flac
 
-# Ignore download files
+# Exclude download files
 *.fdmdownload
 *.part
 *.tmp
 *.temp
+*.download
 
-# Ignore system files
+# Exclude system files
 .DS_Store
 Thumbs.db
 *.log
 
-# Ignore node_modules (already handled by .gitignore)
-node_modules/
-
-# Ignore build artifacts
+# Exclude build artifacts
 dist/
 build/
 .expo/
 
-# Ignore IDE files
+# Exclude IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Ignore OS files
+# Exclude OS files
 .DS_Store
 .DS_Store?
 ._*
@@ -47,6 +55,7 @@ build/
 ehthumbs.db
 Thumbs.db
 
-# Ignore any files outside the project directory
+# Exclude any files outside current directory
 ../*
 ../../*
+../../../*
