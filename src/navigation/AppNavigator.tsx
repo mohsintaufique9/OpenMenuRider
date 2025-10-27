@@ -15,6 +15,7 @@ import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
+import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,6 +29,8 @@ const MainTabNavigator: React.FC = () => {
 
           if (route.name === SCREEN_NAMES.DASHBOARD) {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'OrderHistory') {
+            iconName = focused ? 'time' : 'timer-outline';
           } else if (route.name === SCREEN_NAMES.PROFILE) {
             iconName = focused ? 'person' : 'person-outline';
           } else {
@@ -47,13 +50,22 @@ const MainTabNavigator: React.FC = () => {
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,
-          paddingBottom: Platform.OS === 'ios' ? 34 : 24, // Increased padding for better UX
-          paddingTop: 12, // Increased top padding
-          height: Platform.OS === 'ios' ? 90 : 72, // Increased height for better spacing
+          paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 90 : 64,
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500',
+          marginTop: 4,
+        },
+        tabBarItemStyle: {
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
         },
         headerShown: false,
       })}
@@ -63,6 +75,13 @@ const MainTabNavigator: React.FC = () => {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Dashboard',
+        }}
+      />
+      <Tab.Screen 
+        name="OrderHistory" 
+        component={OrderHistoryScreen}
+        options={{
+          tabBarLabel: 'History',
         }}
       />
       <Tab.Screen 
@@ -117,8 +136,6 @@ const AppNavigator: React.FC = () => {
                   fontFamily: 'System',
                 },
                 headerTintColor: COLORS.PRIMARY_RED,
-                headerBackTitleVisible: true,
-                headerBackTitle: 'Back',
               }}
             />
           </>
