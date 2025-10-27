@@ -131,7 +131,6 @@ const LoginScreen: React.FC = () => {
               <Button
                 mode="contained"
                 onPress={handleLogin}
-                loading={loading}
                 disabled={loading}
                 style={[styles.loginButton, loading && styles.loginButtonLoading]}
                 contentStyle={styles.loginButtonContent}
@@ -266,7 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    width: '100%',
+    minHeight: 24,
   },
   loadingText: {
     color: COLORS.WHITE,
