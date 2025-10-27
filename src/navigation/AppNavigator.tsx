@@ -47,9 +47,9 @@ const MainTabNavigator: React.FC = () => {
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,
-          paddingBottom: Platform.OS === 'ios' ? 34 : 8, // Safe area padding for iOS
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 90 : 60, // Increased height for iOS
+          paddingBottom: Platform.OS === 'ios' ? 34 : 24, // Increased padding for better UX
+          paddingTop: 12, // Increased top padding
+          height: Platform.OS === 'ios' ? 90 : 72, // Increased height for better spacing
         },
         tabBarLabelStyle: {
           fontSize: 12,

@@ -387,59 +387,6 @@ const DashboardScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Quick Actions Section */}
-        <View style={styles.actionsSection}>
-          <Text variant="headlineSmall" style={styles.sectionTitle}>
-            Quick Actions
-          </Text>
-          
-          <View style={styles.actionsContainer}>
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.PRIMARY_RED }]}>
-                  <Ionicons name="time-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Order History
-                </Text>
-              </Card.Content>
-            </Card>
-
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.SUCCESS }]}>
-                  <Ionicons name="person-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Profile
-                </Text>
-              </Card.Content>
-            </Card>
-
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.PRIMARY_YELLOW }]}>
-                  <Ionicons name="settings-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Settings
-                </Text>
-              </Card.Content>
-            </Card>
-
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.TEXT_SECONDARY }]}>
-                  <Ionicons name="help-circle-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Help & Support
-                </Text>
-              </Card.Content>
-            </Card>
-          </View>
-        </View>
-
         <View style={styles.bottomSpacing} />
       </ScrollView>
     </SafeAreaView>
@@ -709,48 +656,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'System',
     color: COLORS.WHITE,
-  },
-  primaryButton: {
-    backgroundColor: COLORS.PRIMARY_RED,
-    borderWidth: 0,
-    shadowColor: COLORS.PRIMARY_RED,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  actionsSection: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  actionCard: {
-    width: '47%',
-    borderRadius: 16,
-    backgroundColor: COLORS.WHITE,
-  },
-  actionContent: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  actionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  actionText: {
-    color: COLORS.TEXT_PRIMARY,
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 14,
-    fontFamily: 'System',
   },
   bottomSpacing: {
     height: 100,
