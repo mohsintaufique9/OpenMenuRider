@@ -135,12 +135,11 @@ const LoginScreen: React.FC = () => {
                 style={[styles.loginButton, loading && styles.loginButtonLoading]}
                 contentStyle={styles.loginButtonContent}
                 labelStyle={styles.loginButtonLabel}
-                icon={loading ? undefined : "login"}
               >
                 {loading ? (
                   <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="small" color={COLORS.WHITE} />
                     <Text style={styles.loadingText}>Signing In</Text>
+                    <ActivityIndicator size="small" color={COLORS.WHITE} style={styles.loadingSpinner} />
                   </View>
                 ) : (
                   'Sign In'
@@ -264,13 +263,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    minHeight: 24,
+    gap: 12,
+    width: '100%',
+  },
+  loadingSpinner: {
+    width: 20,
+    height: 20,
   },
   loadingText: {
     color: COLORS.WHITE,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     fontFamily: 'System',
   },
   forgotButton: {

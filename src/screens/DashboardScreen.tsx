@@ -147,6 +147,15 @@ const DashboardScreen: React.FC = () => {
     }
   };
 
+  const getStatusIconColor = (status: string) => {
+    // If status background is red, return white for better visibility
+    const statusColor = getStatusColor(status);
+    if (statusColor === COLORS.PRIMARY_RED) {
+      return COLORS.WHITE;
+    }
+    return COLORS.WHITE; // Default to white for all statuses
+  };
+
   const activeOrders = orders.filter(order => 
     ['pending', 'preparing', 'ready', 'on_the_way'].includes(order.status)
   );
@@ -313,14 +322,15 @@ const DashboardScreen: React.FC = () => {
                         {new Date(order.created_at).toLocaleTimeString()}
                       </Text>
                     </View>
-                    <Chip
-                      icon={getStatusIcon(order.status)}
-                      style={[styles.statusChip, { backgroundColor: getStatusColor(order.status) }]}
-                      textStyle={styles.statusChipText}
-                      compact
-                    >
-                      {getStatusText(order.status)}
-                    </Chip>
+                    <View style={[styles.statusChipContainer, { backgroundColor: getStatusColor(order.status) }]}>
+                      <Chip
+                        style={styles.statusChip}
+                        textStyle={[styles.statusChipText, { color: COLORS.WHITE }]}
+                        compact
+                      >
+                        {getStatusText(order.status)}
+                      </Chip>
+                    </View>
                   </View>
 
                   {/* Restaurant & Customer Info */}
@@ -582,14 +592,20 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'System',
   },
-  statusChip: {
+  statusChipContainer: {
     borderRadius: 20,
+    height: 32,
+    overflow: 'hidden',
+  },
+  statusChip: {
+    borderRadius: 0,
     height: 32,
   },
   statusChipText: {
     color: COLORS.WHITE,
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: 'System',
   },
   orderInfoSection: {
     marginBottom: 16,
