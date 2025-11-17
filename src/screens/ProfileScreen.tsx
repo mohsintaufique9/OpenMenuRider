@@ -1,5 +1,5 @@
 // src/screens/ProfileScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
@@ -13,48 +13,21 @@ import {
   Text,
   Card,
   Surface,
-  TextInput,
   Button,
   Avatar,
   Divider,
   IconButton,
-  Modal,
-  Portal,
   ActivityIndicator,
-  Snackbar,
   Chip,
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
-import { logout, updateProfile, clearError } from '../store/slices/authSlice';
+import { logout } from '../store/slices/authSlice';
 import { COLORS } from '../constants';
-import { Rider } from '../types';
 
 const ProfileScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { rider, loading, error } = useSelector((state: RootState) => state.auth);
-
-  const [isEditModalVisible, setEditModalVisible] = useState(false);
-  const [editedName, setEditedName] = useState(rider?.name || '');
-  const [editedAddress, setEditedAddress] = useState(rider?.address || '');
-  const [editedVehicleType, setEditedVehicleType] = useState(rider?.vehicle_type || '');
-  const [editedVehicleReg, setEditedVehicleReg] = useState(rider?.vehicle_registration_number || '');
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-
-  useEffect(() => {
-    if (rider) {
-      setEditedName(rider.name || '');
-      setEditedAddress(rider.address || '');
-      setEditedVehicleType(rider.vehicle_type || '');
-      setEditedVehicleReg(rider.vehicle_registration_number || '');
-    }
-  }, [rider]);
-
-  useEffect(() => {
-    if (error) {
-      setSnackbarVisible(true);
-    }
-  }, [error]);
+  const { rider, loading } = useSelector((state: RootState) => state.auth);
 
   const handleLogout = () => {
     Alert.alert(
@@ -79,31 +52,6 @@ const ProfileScreen: React.FC = () => {
       ],
       { cancelable: true }
     );
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!editedName.trim() || !editedAddress.trim() || !editedVehicleType.trim() || !editedVehicleReg.trim()) {
-      Alert.alert('Error', 'Please fill in all profile fields');
-      return;
-    }
-
-    try {
-      await dispatch(updateProfile({
-        name: editedName.trim(),
-        address: editedAddress.trim(),
-        vehicle_type: editedVehicleType.trim() as 'motorcycle' | 'bicycle' | 'car' | 'van',
-        vehicle_registration_number: editedVehicleReg.trim(),
-      })).unwrap();
-      setEditModalVisible(false);
-      setSnackbarVisible(true);
-    } catch (e) {
-      // Error handled by Redux
-    }
-  };
-
-  const dismissSnackbar = () => {
-    setSnackbarVisible(false);
-    dispatch(clearError());
   };
 
   const getVehicleIcon = (vehicleType: string) => {
@@ -145,12 +93,6 @@ const ProfileScreen: React.FC = () => {
             <Text variant="headlineMedium" style={styles.headerTitle}>
               My Profile
             </Text>
-            <IconButton
-              icon="pencil"
-              size={24}
-              iconColor={COLORS.PRIMARY_RED}
-              onPress={() => setEditModalVisible(true)}
-            />
           </View>
         </Surface>
 
@@ -357,114 +299,8 @@ const ProfileScreen: React.FC = () => {
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
-
-      {/* Edit Profile Modal */}
-      <Portal>
-        <Modal
-          visible={isEditModalVisible}
-          onDismiss={() => setEditModalVisible(false)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          <KeyboardAvoidingView
-            style={styles.modalContent}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          >
-            <Surface style={styles.modalSurface} elevation={4}>
-              <View style={styles.modalHeader}>
-                <Text variant="headlineSmall" style={styles.modalTitle}>
-                  Edit Profile
-                </Text>
-                <IconButton
-                  icon="close"
-                  size={24}
-                  iconColor={COLORS.TEXT_PRIMARY}
-                  onPress={() => setEditModalVisible(false)}
-                />
-              </View>
-
-              <ScrollView style={styles.modalScrollView} showsVerticalScrollIndicator={false}>
-                <View style={styles.formGroup}>
-                  <TextInput
-                    label="Name"
-                    value={editedName}
-                    onChangeText={setEditedName}
-                    mode="outlined"
-                    style={styles.formInput}
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <TextInput
-                    label="Address"
-                    value={editedAddress}
-                    onChangeText={setEditedAddress}
-                    mode="outlined"
-                    multiline
-                    numberOfLines={3}
-                    style={styles.formInput}
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <TextInput
-                    label="Vehicle Type"
-                    value={editedVehicleType}
-                    onChangeText={setEditedVehicleType}
-                    mode="outlined"
-                    style={styles.formInput}
-                    placeholder="e.g., motorcycle, car"
-                  />
-                </View>
-
-                <View style={styles.formGroup}>
-                  <TextInput
-                    label="Vehicle Registration Number"
-                    value={editedVehicleReg}
-                    onChangeText={setEditedVehicleReg}
-                    mode="outlined"
-                    style={styles.formInput}
-                    placeholder="e.g., ABC-123"
-                  />
-                </View>
-
-                <View style={styles.modalButtons}>
-                  <Button
-                    mode="outlined"
-                    onPress={() => setEditModalVisible(false)}
-                    style={styles.cancelButton}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    mode="contained"
-                    onPress={handleUpdateProfile}
-                    loading={loading}
-                    disabled={loading}
-                    style={styles.saveButton}
-                  >
-                    {loading ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </View>
-              </ScrollView>
-            </Surface>
-          </KeyboardAvoidingView>
-        </Modal>
-      </Portal>
-
-        <Snackbar
-          visible={snackbarVisible}
-          onDismiss={dismissSnackbar}
-          duration={4000}
-          style={[styles.snackbar, { backgroundColor: error ? COLORS.PRIMARY_RED : COLORS.SUCCESS }]}
-          action={{
-            label: 'Dismiss',
-            onPress: dismissSnackbar,
-          }}
-        >
-          {error || 'Profile updated successfully!'}
-        </Snackbar>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 };
 
@@ -611,63 +447,6 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 100,
     paddingBottom: 20,
-  },
-  // Modal Styles
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  modalSurface: {
-    borderRadius: 16,
-    padding: 0,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.LIGHT_GRAY,
-  },
-  modalTitle: {
-    color: COLORS.TEXT_PRIMARY,
-    fontWeight: 'bold',
-  },
-  modalScrollView: {
-    flex: 1,
-  },
-  formGroup: {
-    marginHorizontal: 20,
-    marginTop: 16,
-  },
-  formInput: {
-    backgroundColor: COLORS.WHITE,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    borderRadius: 8,
-  },
-  saveButton: {
-    flex: 1,
-    borderRadius: 8,
-    backgroundColor: COLORS.PRIMARY_RED,
-  },
-  snackbar: {
-    backgroundColor: COLORS.SUCCESS,
   },
 });
 

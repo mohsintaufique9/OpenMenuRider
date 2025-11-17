@@ -2,6 +2,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../constants';
+import { store } from '../store';
+import { setUnauthenticated } from '../store/slices/authSlice';
 
 class ApiService {
   private api: AxiosInstance;
@@ -41,10 +43,12 @@ class ApiService {
       },
       async (error) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid
+          // Token expired or invalid - user is unauthenticated
+          // Clear storage
           await AsyncStorage.removeItem('auth_token');
           await AsyncStorage.removeItem('rider_data');
-          // You can dispatch a logout action here
+          // Update Redux state to trigger navigation back to login screen
+          store.dispatch(setUnauthenticated());
         }
         return Promise.reject(error);
       }
@@ -87,16 +91,20 @@ class ApiService {
     return response.data;
   }
 
-  async updateOrderStatus(orderId: number, status: string, reason?: string) {
+  async updateOrderStatus(orderId: number, status: string, reason?: string, deliveryPasscode?: string) {
     const response = await this.api.put(`/rider/orders/${orderId}/status`, {
       status,
       reason,
+      delivery_passcode: deliveryPasscode,
     });
     return response.data;
   }
 
-  async confirmDelivery(orderId: number, data: any) {
-    const response = await this.api.post(`/rider/orders/${orderId}/delivery-confirmation`, data);
+  async confirmDelivery(orderId: number, data: any, deliveryPasscode?: string) {
+    const response = await this.api.post(`/rider/orders/${orderId}/delivery-confirmation`, {
+      ...data,
+      delivery_passcode: deliveryPasscode,
+    });
     return response.data;
   }
 

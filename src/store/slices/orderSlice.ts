@@ -37,9 +37,9 @@ export const fetchOrderDetails = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   'order/updateOrderStatus',
-  async ({ orderId, status, reason }: { orderId: number; status: string; reason?: string }, { rejectWithValue }) => {
+  async ({ orderId, status, reason, deliveryPasscode }: { orderId: number; status: string; reason?: string; deliveryPasscode?: string }, { rejectWithValue }) => {
     try {
-      const response = await ApiService.updateOrderStatus(orderId, status, reason);
+      const response = await ApiService.updateOrderStatus(orderId, status, reason, deliveryPasscode);
       return { orderId, status, reason };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update order status');
@@ -49,9 +49,9 @@ export const updateOrderStatus = createAsyncThunk(
 
 export const confirmDelivery = createAsyncThunk(
   'order/confirmDelivery',
-  async ({ orderId, deliveryData }: { orderId: number; deliveryData: any }, { rejectWithValue }) => {
+  async ({ orderId, deliveryData, deliveryPasscode }: { orderId: number; deliveryData: any; deliveryPasscode?: string }, { rejectWithValue }) => {
     try {
-      const response = await ApiService.confirmDelivery(orderId, deliveryData);
+      const response = await ApiService.confirmDelivery(orderId, deliveryData, deliveryPasscode);
       return { orderId, deliveryData };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to confirm delivery');

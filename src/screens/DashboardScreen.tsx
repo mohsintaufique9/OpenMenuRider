@@ -147,15 +147,6 @@ const DashboardScreen: React.FC = () => {
     }
   };
 
-  const getStatusIconColor = (status: string) => {
-    // If status background is red, return white for better visibility
-    const statusColor = getStatusColor(status);
-    if (statusColor === COLORS.PRIMARY_RED) {
-      return COLORS.WHITE;
-    }
-    return COLORS.WHITE; // Default to white for all statuses
-  };
-
   const activeOrders = orders.filter(order => 
     ['pending', 'preparing', 'ready', 'on_the_way'].includes(order.status)
   );
@@ -322,15 +313,14 @@ const DashboardScreen: React.FC = () => {
                         {new Date(order.created_at).toLocaleTimeString()}
                       </Text>
                     </View>
-                    <View style={[styles.statusChipContainer, { backgroundColor: getStatusColor(order.status) }]}>
-                      <Chip
-                        style={styles.statusChip}
-                        textStyle={[styles.statusChipText, { color: COLORS.WHITE }]}
-                        compact
-                      >
-                        {getStatusText(order.status)}
-                      </Chip>
-                    </View>
+                    <Chip
+                      icon={getStatusIcon(order.status)}
+                      style={[styles.statusChip, { backgroundColor: getStatusColor(order.status) }]}
+                      textStyle={styles.statusChipText}
+                      compact
+                    >
+                      {getStatusText(order.status)}
+                    </Chip>
                   </View>
 
                   {/* Restaurant & Customer Info */}
@@ -395,6 +385,59 @@ const DashboardScreen: React.FC = () => {
               </TouchableOpacity>
             ))
           )}
+        </View>
+
+        {/* Quick Actions Section */}
+        <View style={styles.actionsSection}>
+          <Text variant="headlineSmall" style={styles.sectionTitle}>
+            Quick Actions
+          </Text>
+          
+          <View style={styles.actionsContainer}>
+            <Card style={styles.actionCard} mode="elevated" elevation={2}>
+              <Card.Content style={styles.actionContent}>
+                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.PRIMARY_RED }]}>
+                  <Ionicons name="time-outline" size={24} color={COLORS.WHITE} />
+                </View>
+                <Text variant="bodyMedium" style={styles.actionText}>
+                  Order History
+                </Text>
+              </Card.Content>
+            </Card>
+
+            <Card style={styles.actionCard} mode="elevated" elevation={2}>
+              <Card.Content style={styles.actionContent}>
+                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.SUCCESS }]}>
+                  <Ionicons name="person-outline" size={24} color={COLORS.WHITE} />
+                </View>
+                <Text variant="bodyMedium" style={styles.actionText}>
+                  Profile
+                </Text>
+              </Card.Content>
+            </Card>
+
+            <Card style={styles.actionCard} mode="elevated" elevation={2}>
+              <Card.Content style={styles.actionContent}>
+                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.PRIMARY_YELLOW }]}>
+                  <Ionicons name="settings-outline" size={24} color={COLORS.WHITE} />
+                </View>
+                <Text variant="bodyMedium" style={styles.actionText}>
+                  Settings
+                </Text>
+              </Card.Content>
+            </Card>
+
+            <Card style={styles.actionCard} mode="elevated" elevation={2}>
+              <Card.Content style={styles.actionContent}>
+                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.TEXT_SECONDARY }]}>
+                  <Ionicons name="help-circle-outline" size={24} color={COLORS.WHITE} />
+                </View>
+                <Text variant="bodyMedium" style={styles.actionText}>
+                  Help & Support
+                </Text>
+              </Card.Content>
+            </Card>
+          </View>
         </View>
 
         <View style={styles.bottomSpacing} />
@@ -592,20 +635,14 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'System',
   },
-  statusChipContainer: {
-    borderRadius: 20,
-    height: 32,
-    overflow: 'hidden',
-  },
   statusChip: {
-    borderRadius: 0,
+    borderRadius: 20,
     height: 32,
   },
   statusChipText: {
     color: COLORS.WHITE,
     fontSize: 12,
     fontWeight: '600',
-    fontFamily: 'System',
   },
   orderInfoSection: {
     marginBottom: 16,
@@ -672,6 +709,48 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'System',
     color: COLORS.WHITE,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.PRIMARY_RED,
+    borderWidth: 0,
+    shadowColor: COLORS.PRIMARY_RED,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  actionsSection: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  actionCard: {
+    width: '47%',
+    borderRadius: 16,
+    backgroundColor: COLORS.WHITE,
+  },
+  actionContent: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  actionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  actionText: {
+    color: COLORS.TEXT_PRIMARY,
+    textAlign: 'center',
+    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: 'System',
   },
   bottomSpacing: {
     height: 100,

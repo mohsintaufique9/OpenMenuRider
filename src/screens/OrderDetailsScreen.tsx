@@ -1,5 +1,5 @@
 // src/screens/OrderDetailsScreen.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,6 +10,8 @@ import {
   RefreshControl,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +45,8 @@ const OrderDetailsScreen: React.FC = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [selectedReason, setSelectedReason] = useState('');
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [passcodeDigits, setPasscodeDigits] = useState<string[]>(['', '', '', '']);
 
   const defaultCancelReasons = [
     'Customer not available',
@@ -54,6 +58,49 @@ const OrderDetailsScreen: React.FC = () => {
     'Customer phone unreachable',
     'Other'
   ];
+
+  const passcodeInputRefs = useRef<Array<TextInput | null>>([]);
+  const deliveryPasscode = passcodeDigits.join('');
+
+  const handlePasscodeInput = (value: string, index: number) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    const updatedDigits = [...passcodeDigits];
+
+    if (numericValue.length === 0) {
+      updatedDigits[index] = '';
+      setPasscodeDigits(updatedDigits);
+      return;
+    }
+
+    updatedDigits[index] = numericValue.charAt(numericValue.length - 1);
+    setPasscodeDigits(updatedDigits);
+
+    if (index < passcodeDigits.length - 1) {
+      passcodeInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePasscodeKeyPress = (key: string, index: number) => {
+    if (key === 'Backspace') {
+      const updatedDigits = [...passcodeDigits];
+
+      if (updatedDigits[index]) {
+        updatedDigits[index] = '';
+        setPasscodeDigits(updatedDigits);
+        return;
+      }
+
+      if (index > 0) {
+        updatedDigits[index - 1] = '';
+        setPasscodeDigits(updatedDigits);
+        passcodeInputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const resetPasscodeInputs = () => {
+    setPasscodeDigits(['', '', '', '']);
+  };
 
   useEffect(() => {
     if (orderId) {
@@ -74,12 +121,25 @@ const OrderDetailsScreen: React.FC = () => {
     }
   };
 
+  const focusFirstPasscodeInput = () => {
+    setTimeout(() => {
+      passcodeInputRefs.current[0]?.focus();
+    }, 50);
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     if (!currentOrder) return;
     
+    // If marking as delivered, show passcode modal
+    if (newStatus === 'delivered') {
+      resetPasscodeInputs();
+      setShowPasscodeModal(true);
+      focusFirstPasscodeInput();
+      return;
+    }
+    
     const statusMessages = {
       'on_the_way': 'Are you ready to start delivery?',
-      'delivered': 'Have you delivered this order to the customer?',
     };
     
     const message = statusMessages[newStatus as keyof typeof statusMessages] || 'Update order status?';
@@ -102,8 +162,8 @@ const OrderDetailsScreen: React.FC = () => {
               
               // Refresh order details
               dispatch(fetchOrderDetails(currentOrder.id));
-            } catch (error) {
-              Alert.alert('Error', 'Failed to update order status');
+            } catch (error: any) {
+              Alert.alert('Error', error || 'Failed to update order status');
             } finally {
               setIsUpdating(false);
             }
@@ -113,37 +173,41 @@ const OrderDetailsScreen: React.FC = () => {
     );
   };
 
+  const handleConfirmDeliveryWithPasscode = async () => {
+    if (!currentOrder) return;
+    
+    if (!deliveryPasscode || deliveryPasscode.length !== 4) {
+      Alert.alert('Error', 'Please enter a valid 4-digit passcode');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await dispatch(updateOrderStatus({ 
+        orderId: currentOrder.id, 
+        status: 'delivered',
+        deliveryPasscode: deliveryPasscode
+      })).unwrap();
+      
+      Alert.alert('Success', 'Order marked as delivered successfully');
+      setShowPasscodeModal(false);
+      resetPasscodeInputs();
+      
+      // Refresh order details
+      dispatch(fetchOrderDetails(currentOrder.id));
+    } catch (error: any) {
+      Alert.alert('Error', error || 'Failed to confirm delivery. Please verify the passcode with the customer.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleConfirmDelivery = async () => {
     if (!currentOrder) return;
     
-    Alert.alert(
-      'Confirm Delivery',
-      'Are you sure you have delivered this order to the customer?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: async () => {
-            setIsUpdating(true);
-            try {
-              await dispatch(confirmDelivery({ 
-                orderId: currentOrder.id, 
-                deliveryData: { 
-                  delivered_at: new Date().toISOString(),
-                  rider_confirmed: true 
-                } 
-              })).unwrap();
-              Alert.alert('Success', 'Delivery confirmed successfully');
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to confirm delivery');
-            } finally {
-              setIsUpdating(false);
-            }
-          }
-        }
-      ]
-    );
+    resetPasscodeInputs();
+    setShowPasscodeModal(true);
+    focusFirstPasscodeInput();
   };
 
   const handleCancelOrder = () => {
@@ -526,47 +590,142 @@ const OrderDetailsScreen: React.FC = () => {
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
           {currentOrder.status === 'ready' && (
-            <Button
-              mode="contained"
-              icon="bike"
-              onPress={() => handleStatusChange('on_the_way')}
-              style={styles.primaryActionButton}
-              loading={isUpdating}
-              disabled={isUpdating}
-            >
-              Start Delivery
-            </Button>
+            <View style={styles.rowActions}>
+              <Button
+                mode="contained"
+                icon="bike"
+                onPress={() => handleStatusChange('on_the_way')}
+                style={[styles.primaryActionButton, styles.halfWidthButton]}
+                labelStyle={styles.primaryActionLabel}
+                loading={isUpdating}
+                disabled={isUpdating}
+              >
+                Start Delivery
+              </Button>
+              <Button
+                mode="outlined"
+                icon="close-circle"
+                onPress={handleCancelOrder}
+                style={[styles.cancelActionButton, styles.halfWidthButton]}
+                labelStyle={styles.cancelActionLabel}
+                loading={isUpdating}
+                disabled={isUpdating}
+              >
+                Cancel Order
+              </Button>
+            </View>
           )}
           
           {currentOrder.status === 'on_the_way' && (
-            <Button
-              mode="contained"
-              icon="check-circle"
-              onPress={handleConfirmDelivery}
-              style={styles.successActionButton}
-              loading={isUpdating}
-              disabled={isUpdating}
-            >
-              Confirm Delivery
-            </Button>
-          )}
-
-          {(currentOrder.status === 'ready' || currentOrder.status === 'on_the_way') && (
-            <Button
-              mode="outlined"
-              icon="close-circle"
-              onPress={handleCancelOrder}
-              style={styles.cancelActionButton}
-              loading={isUpdating}
-              disabled={isUpdating}
-            >
-              Cancel Order
-            </Button>
+            <View style={styles.rowActions}>
+              <Button
+                mode="contained"
+                icon="check-circle"
+                onPress={handleConfirmDelivery}
+                style={[styles.successActionButton, styles.halfWidthButton]}
+                labelStyle={styles.primaryActionLabel}
+                loading={isUpdating}
+                disabled={isUpdating}
+              >
+                Confirm Delivered
+              </Button>
+              <Button
+                mode="outlined"
+                icon="close-circle"
+                onPress={handleCancelOrder}
+                style={[styles.cancelActionButton, styles.halfWidthButton]}
+                labelStyle={styles.cancelActionLabel}
+                loading={isUpdating}
+                disabled={isUpdating}
+              >
+                Cancel Order
+              </Button>
+            </View>
           )}
         </View>
 
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* Delivery Passcode Modal */}
+      <Modal
+        visible={showPasscodeModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowPasscodeModal(false);
+          resetPasscodeInputs();
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+        >
+          <View style={styles.modalContent}>
+            <Text variant="headlineSmall" style={styles.modalTitle}>
+              Enter Delivery Passcode
+            </Text>
+            <Text variant="bodyMedium" style={styles.modalSubtitle}>
+              Please ask the customer for their 4-digit delivery passcode to confirm delivery:
+            </Text>
+
+            <View style={styles.passcodeContainer}>
+              <View style={styles.passcodeInputsWrapper}>
+                {passcodeDigits.map((digit, index) => (
+                  <TextInput
+                    key={`passcode-${index}`}
+                    ref={(ref) => {
+                      passcodeInputRefs.current[index] = ref;
+                    }}
+                    style={[
+                      styles.passcodeBox,
+                      digit ? styles.passcodeBoxFilled : undefined,
+                    ]}
+                    value={digit}
+                    onChangeText={(value) => handlePasscodeInput(value, index)}
+                    onKeyPress={({ nativeEvent }) =>
+                      handlePasscodeKeyPress(nativeEvent.key, index)
+                    }
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    textAlign="center"
+                    returnKeyType="done"
+                  />
+                ))}
+              </View>
+              <Text variant="bodySmall" style={styles.passcodeHint}>
+                Enter the 4-digit code provided by the customer
+              </Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <Button
+                mode="outlined"
+                onPress={() => {
+                  setShowPasscodeModal(false);
+                  resetPasscodeInputs();
+                }}
+                style={styles.modalButton}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                mode="contained"
+                icon="check-circle"
+                onPress={handleConfirmDeliveryWithPasscode}
+                style={[styles.modalButton, styles.confirmButton]}
+                labelStyle={styles.modalConfirmLabel}
+                loading={isUpdating}
+                disabled={isUpdating || deliveryPasscode.length !== 4}
+              >
+                Delivered
+              </Button>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Cancellation Modal */}
       <Modal
@@ -689,7 +848,7 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 16,
     backgroundColor: COLORS.WHITE,
-    shadowColor: COLORS.BLACK,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -930,6 +1089,15 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 8,
   },
+  rowActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  halfWidthButton: {
+    flex: 1,
+  },
   primaryActionButton: {
     backgroundColor: COLORS.PRIMARY_RED,
     borderRadius: 16,
@@ -940,9 +1108,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   successActionButton: {
-    backgroundColor: COLORS.SUCCESS,
+    backgroundColor: COLORS.PRIMARY_RED,
     borderRadius: 16,
-    shadowColor: COLORS.SUCCESS,
+    shadowColor: COLORS.PRIMARY_RED,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -952,7 +1120,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderColor: COLORS.PRIMARY_RED,
     borderWidth: 2,
-    marginTop: 12,
+  },
+  primaryActionLabel: {
+    color: COLORS.WHITE,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    fontFamily: 'System',
+  },
+  cancelActionLabel: {
+    color: COLORS.PRIMARY_RED,
+    fontWeight: '600',
+    fontFamily: 'System',
   },
   bottomSpacing: {
     height: 100,
@@ -1032,6 +1210,53 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     backgroundColor: COLORS.PRIMARY_RED,
+  },
+  modalConfirmLabel: {
+    color: COLORS.WHITE,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    fontFamily: 'System',
+  },
+  passcodeContainer: {
+    marginVertical: 20,
+    alignItems: 'center',
+  },
+  passcodeInputsWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: 12,
+  },
+  passcodeBox: {
+    width: 56,
+    height: 64,
+    marginHorizontal: 6,
+    borderWidth: 2,
+    borderColor: COLORS.LIGHT_GRAY,
+    borderRadius: 14,
+    backgroundColor: COLORS.WHITE,
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 24,
+    fontWeight: '700',
+    fontFamily: 'System',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  passcodeBoxFilled: {
+    borderColor: COLORS.PRIMARY_RED,
+    shadowOpacity: 0.2,
+  },
+  passcodeHint: {
+    color: COLORS.TEXT_SECONDARY,
+    textAlign: 'center',
+    fontSize: 13,
+    fontFamily: 'System',
+    marginTop: 4,
   },
 });
 
