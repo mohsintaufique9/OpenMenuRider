@@ -47,6 +47,8 @@ const OrderDetailsScreen: React.FC = () => {
   const [selectedReason, setSelectedReason] = useState('');
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcodeDigits, setPasscodeDigits] = useState<string[]>(['', '', '', '']);
+  const [isVerifyingPasscode, setIsVerifyingPasscode] = useState(false);
+  const [passcodeError, setPasscodeError] = useState('');
 
   const defaultCancelReasons = [
     'Customer not available',
@@ -100,6 +102,7 @@ const OrderDetailsScreen: React.FC = () => {
 
   const resetPasscodeInputs = () => {
     setPasscodeDigits(['', '', '', '']);
+    setPasscodeError('');
   };
 
   useEffect(() => {
@@ -133,6 +136,7 @@ const OrderDetailsScreen: React.FC = () => {
     // If marking as delivered, show passcode modal
     if (newStatus === 'delivered') {
       resetPasscodeInputs();
+      setIsVerifyingPasscode(false);
       setShowPasscodeModal(true);
       focusFirstPasscodeInput();
       return;
@@ -177,28 +181,28 @@ const OrderDetailsScreen: React.FC = () => {
     if (!currentOrder) return;
     
     if (!deliveryPasscode || deliveryPasscode.length !== 4) {
-      Alert.alert('Error', 'Please enter a valid 4-digit passcode');
+      setPasscodeError('Please enter a valid 4-digit passcode');
       return;
     }
 
-    setIsUpdating(true);
+    setPasscodeError('');
+    setIsVerifyingPasscode(true);
     try {
       await dispatch(updateOrderStatus({ 
         orderId: currentOrder.id, 
         status: 'delivered',
         deliveryPasscode: deliveryPasscode
       })).unwrap();
-      
-      Alert.alert('Success', 'Order marked as delivered successfully');
+
       setShowPasscodeModal(false);
       resetPasscodeInputs();
+      setIsVerifyingPasscode(false);
       
       // Refresh order details
       dispatch(fetchOrderDetails(currentOrder.id));
     } catch (error: any) {
-      Alert.alert('Error', error || 'Failed to confirm delivery. Please verify the passcode with the customer.');
-    } finally {
-      setIsUpdating(false);
+      setPasscodeError(error || 'Failed to confirm delivery. Please verify the passcode with the customer.');
+      setIsVerifyingPasscode(false);
     }
   };
 
@@ -206,6 +210,7 @@ const OrderDetailsScreen: React.FC = () => {
     if (!currentOrder) return;
     
     resetPasscodeInputs();
+    setIsVerifyingPasscode(false);
     setShowPasscodeModal(true);
     focusFirstPasscodeInput();
   };
@@ -663,66 +668,76 @@ const OrderDetailsScreen: React.FC = () => {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
           <View style={styles.modalContent}>
-            <Text variant="headlineSmall" style={styles.modalTitle}>
-              Enter Delivery Passcode
-            </Text>
-            <Text variant="bodyMedium" style={styles.modalSubtitle}>
-              Please ask the customer for their 4-digit delivery passcode to confirm delivery:
-            </Text>
-
-            <View style={styles.passcodeContainer}>
-              <View style={styles.passcodeInputsWrapper}>
-                {passcodeDigits.map((digit, index) => (
-                  <TextInput
-                    key={`passcode-${index}`}
-                    ref={(ref) => {
-                      passcodeInputRefs.current[index] = ref;
-                    }}
-                    style={[
-                      styles.passcodeBox,
-                      digit ? styles.passcodeBoxFilled : undefined,
-                    ]}
-                    value={digit}
-                    onChangeText={(value) => handlePasscodeInput(value, index)}
-                    onKeyPress={({ nativeEvent }) =>
-                      handlePasscodeKeyPress(nativeEvent.key, index)
-                    }
-                    keyboardType="number-pad"
-                    maxLength={1}
-                    textAlign="center"
-                    returnKeyType="done"
-                  />
-                ))}
+            {isVerifyingPasscode ? (
+              <View style={styles.passcodeLoader}>
+                <ActivityIndicator size="large" color={COLORS.PRIMARY_RED} />
+                <Text style={styles.passcodeLoaderText}>Verifying passcode...</Text>
               </View>
-              <Text variant="bodySmall" style={styles.passcodeHint}>
-                Enter the 4-digit code provided by the customer
-              </Text>
-            </View>
+            ) : (
+              <>
+                <Text variant="headlineSmall" style={styles.modalTitle}>
+                  Enter Delivery Passcode
+                </Text>
+                <Text variant="bodyMedium" style={styles.modalSubtitle}>
+                  Please ask the customer for their 4-digit delivery passcode to confirm delivery:
+                </Text>
 
-            <View style={styles.modalButtons}>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  setShowPasscodeModal(false);
-                  resetPasscodeInputs();
-                }}
-                style={styles.modalButton}
-                disabled={isUpdating}
-              >
-                Cancel
-              </Button>
-              <Button
-                mode="contained"
-                icon="check-circle"
-                onPress={handleConfirmDeliveryWithPasscode}
-                style={[styles.modalButton, styles.confirmButton]}
-                labelStyle={styles.modalConfirmLabel}
-                loading={isUpdating}
-                disabled={isUpdating || deliveryPasscode.length !== 4}
-              >
-                Delivered
-              </Button>
-            </View>
+                <View style={styles.passcodeContainer}>
+                  <View style={styles.passcodeInputsWrapper}>
+                    {passcodeDigits.map((digit, index) => (
+                      <TextInput
+                        key={`passcode-${index}`}
+                        ref={(ref) => {
+                          passcodeInputRefs.current[index] = ref;
+                        }}
+                        style={[
+                          styles.passcodeBox,
+                          digit ? styles.passcodeBoxFilled : undefined,
+                        ]}
+                        value={digit}
+                        onChangeText={(value) => handlePasscodeInput(value, index)}
+                        onKeyPress={({ nativeEvent }) =>
+                          handlePasscodeKeyPress(nativeEvent.key, index)
+                        }
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        textAlign="center"
+                        returnKeyType="done"
+                      />
+                    ))}
+                  </View>
+                  <Text variant="bodySmall" style={styles.passcodeHint}>
+                    Enter the 4-digit code provided by the customer
+                  </Text>
+                  {passcodeError ? (
+                    <Text style={styles.passcodeError}>{passcodeError}</Text>
+                  ) : null}
+                </View>
+
+                <View style={styles.modalButtons}>
+                  <Button
+                    mode="outlined"
+                    onPress={() => {
+                      setShowPasscodeModal(false);
+                      resetPasscodeInputs();
+                    }}
+                    style={styles.modalButton}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    mode="contained"
+                    icon="check-circle"
+                    onPress={handleConfirmDeliveryWithPasscode}
+                    style={[styles.modalButton, styles.confirmButton]}
+                    labelStyle={styles.modalConfirmLabel}
+                    disabled={deliveryPasscode.length !== 4}
+                  >
+                    Delivered
+                  </Button>
+                </View>
+              </>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1257,6 +1272,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'System',
     marginTop: 4,
+  },
+  passcodeError: {
+    color: COLORS.PRIMARY_RED,
+    textAlign: 'center',
+    fontSize: 13,
+    fontFamily: 'System',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  passcodeLoader: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+  },
+  passcodeLoaderText: {
+    marginTop: 16,
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

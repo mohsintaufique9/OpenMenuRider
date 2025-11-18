@@ -122,13 +122,13 @@ const ProfileScreen: React.FC = () => {
 
         {/* Personal Information */}
         <Card style={styles.sectionCard} mode="elevated">
-          <Card.Content>
+          <Card.Content style={styles.cardContent}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
               Personal Information
             </Text>
             
             <View style={styles.infoRow}>
-              <IconButton icon="account" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+              <IconButton icon="account" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
               <View style={styles.infoContent}>
                 <Text variant="bodySmall" style={styles.infoLabel}>
                   Name
@@ -142,7 +142,7 @@ const ProfileScreen: React.FC = () => {
             <Divider style={styles.divider} />
 
             <View style={styles.infoRow}>
-              <IconButton icon="phone" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+              <IconButton icon="phone" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
               <View style={styles.infoContent}>
                 <Text variant="bodySmall" style={styles.infoLabel}>
                   Phone
@@ -156,7 +156,7 @@ const ProfileScreen: React.FC = () => {
             <Divider style={styles.divider} />
 
             <View style={styles.infoRow}>
-              <IconButton icon="card-account-details" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+              <IconButton icon="card-account-details" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
               <View style={styles.infoContent}>
                 <Text variant="bodySmall" style={styles.infoLabel}>
                   CNIC
@@ -170,7 +170,7 @@ const ProfileScreen: React.FC = () => {
             <Divider style={styles.divider} />
 
             <View style={styles.infoRow}>
-              <IconButton icon="map-marker" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+              <IconButton icon="map-marker" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
               <View style={styles.infoContent}>
                 <Text variant="bodySmall" style={styles.infoLabel}>
                   Address
@@ -185,7 +185,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Vehicle Information */}
         <Card style={styles.sectionCard} mode="elevated">
-          <Card.Content>
+          <Card.Content style={styles.cardContent}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
               Vehicle Information
             </Text>
@@ -193,8 +193,9 @@ const ProfileScreen: React.FC = () => {
             <View style={styles.infoRow}>
               <IconButton 
                 icon={getVehicleIcon(rider.vehicle_type)} 
-                size={20} 
-                iconColor={COLORS.TEXT_SECONDARY} 
+                size={18} 
+                iconColor={COLORS.TEXT_SECONDARY}
+                style={styles.infoIcon}
               />
               <View style={styles.infoContent}>
                 <Text variant="bodySmall" style={styles.infoLabel}>
@@ -209,7 +210,7 @@ const ProfileScreen: React.FC = () => {
             <Divider style={styles.divider} />
 
             <View style={styles.infoRow}>
-              <IconButton icon="car" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+              <IconButton icon="car" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
               <View style={styles.infoContent}>
                 <Text variant="bodySmall" style={styles.infoLabel}>
                   Registration
@@ -224,7 +225,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Associated Restaurant */}
         <Card style={styles.sectionCard} mode="elevated">
-          <Card.Content>
+          <Card.Content style={styles.cardContent}>
             <Text variant="titleLarge" style={styles.sectionTitle}>
               Associated Restaurant
             </Text>
@@ -232,7 +233,7 @@ const ProfileScreen: React.FC = () => {
             {rider.restaurant ? (
               <>
                 <View style={styles.infoRow}>
-                  <IconButton icon="store" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+                  <IconButton icon="store" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
                   <View style={styles.infoContent}>
                     <Text variant="bodySmall" style={styles.infoLabel}>
                       Name
@@ -246,7 +247,7 @@ const ProfileScreen: React.FC = () => {
                 <Divider style={styles.divider} />
 
                 <View style={styles.infoRow}>
-                  <IconButton icon="phone" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+                  <IconButton icon="phone" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
                   <View style={styles.infoContent}>
                     <Text variant="bodySmall" style={styles.infoLabel}>
                       Phone
@@ -260,7 +261,7 @@ const ProfileScreen: React.FC = () => {
                 <Divider style={styles.divider} />
 
                 <View style={styles.infoRow}>
-                  <IconButton icon="map-marker-radius" size={20} iconColor={COLORS.TEXT_SECONDARY} />
+                  <IconButton icon="map-marker-radius" size={18} iconColor={COLORS.TEXT_SECONDARY} style={styles.infoIcon} />
                   <View style={styles.infoContent}>
                     <Text variant="bodySmall" style={styles.infoLabel}>
                       Delivery Radius
@@ -281,7 +282,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Logout Button */}
         <Card style={styles.logoutCard} mode="elevated">
-          <Card.Content>
+          <Card.Content style={styles.cardContent}>
             <Button
               mode="contained"
               onPress={handleLogout}
@@ -333,14 +334,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   headerTitle: {
     color: COLORS.TEXT_PRIMARY,
     fontWeight: 'bold',
   },
   profileCard: {
-    margin: 16,
+    margin: 12,
+    marginBottom: 8,
     borderRadius: 16,
     backgroundColor: COLORS.WHITE,
     shadowColor: COLORS.BLACK,
@@ -351,22 +353,22 @@ const styles = StyleSheet.create({
   },
   profileContent: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: 20,
     paddingHorizontal: 20,
   },
   profileAvatar: {
     backgroundColor: COLORS.PRIMARY_RED,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   profileName: {
     color: COLORS.TEXT_PRIMARY,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
     textAlign: 'center',
   },
   profilePhone: {
     color: COLORS.TEXT_SECONDARY,
-    marginBottom: 16,
+    marginBottom: 10,
     textAlign: 'center',
   },
   statusChip: {
@@ -379,8 +381,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   sectionCard: {
-    margin: 16,
-    marginTop: 0,
+    margin: 12,
+    marginTop: 8,
     borderRadius: 16,
     backgroundColor: COLORS.WHITE,
     shadowColor: COLORS.BLACK,
@@ -389,31 +391,42 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  cardContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
   sectionTitle: {
     color: COLORS.TEXT_PRIMARY,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 12,
     paddingHorizontal: 4,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 4,
+  },
+  infoIcon: {
+    margin: 0,
+    width: 36,
+    height: 36,
   },
   infoContent: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 4,
   },
   infoLabel: {
     color: COLORS.TEXT_SECONDARY,
-    marginBottom: 2,
+    marginBottom: 1,
+    fontSize: 12,
   },
   infoValue: {
     color: COLORS.TEXT_PRIMARY,
+    fontSize: 14,
   },
   divider: {
-    marginVertical: 8,
+    marginVertical: 4,
     backgroundColor: COLORS.LIGHT_GRAY,
   },
   noRestaurantText: {
@@ -423,8 +436,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   logoutCard: {
-    margin: 16,
-    marginTop: 0,
+    margin: 12,
+    marginTop: 8,
     borderRadius: 16,
     backgroundColor: COLORS.WHITE,
     shadowColor: COLORS.BLACK,
@@ -445,8 +458,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   bottomSpacing: {
-    height: 100,
-    paddingBottom: 20,
+    height: 60,
+    paddingBottom: 12,
   },
 });
 
