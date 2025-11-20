@@ -113,11 +113,11 @@ const orderSlice = createSlice({
       
       // Update order status
       .addCase(updateOrderStatus.pending, (state) => {
-        state.loading = true;
+        // Don't set loading = true here to avoid full page reload
+        // Component will use its own isUpdating state for button loading
         state.error = null;
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        state.loading = false;
         const { orderId, status } = action.payload;
         
         // Update order in list
@@ -134,17 +134,16 @@ const orderSlice = createSlice({
         state.error = null;
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
       })
       
       // Confirm delivery
       .addCase(confirmDelivery.pending, (state) => {
-        state.loading = true;
+        // Don't set loading = true here to avoid full page reload
+        // Component will use its own isUpdating state for button loading
         state.error = null;
       })
       .addCase(confirmDelivery.fulfilled, (state, action) => {
-        state.loading = false;
         const { orderId } = action.payload;
         
         // Update order status to delivered
@@ -160,7 +159,6 @@ const orderSlice = createSlice({
         state.error = null;
       })
       .addCase(confirmDelivery.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload as string;
       });
   },

@@ -74,6 +74,11 @@ export interface DeliveryDetails {
 
 export interface PaymentDetails {
   method: string;
+  status?: string;
+  transaction_id?: string;
+  provider?: string;
+  amount?: number;
+  [key: string]: any;
 }
 
 export interface Notification {

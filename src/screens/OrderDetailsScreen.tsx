@@ -45,18 +45,19 @@ const OrderDetailsScreen: React.FC = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [selectedReason, setSelectedReason] = useState('');
+  const [isReasonInputFocused, setIsReasonInputFocused] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcodeDigits, setPasscodeDigits] = useState<string[]>(['', '', '', '']);
   const [isVerifyingPasscode, setIsVerifyingPasscode] = useState(false);
   const [passcodeError, setPasscodeError] = useState('');
+  const paymentMethod = currentOrder?.payment_details?.method;
+  const transactionId = currentOrder?.payment_details
+    ? (currentOrder.payment_details as Record<string, any>)?.transaction_id
+    : undefined;
 
   const defaultCancelReasons = [
-    'Customer not available',
     'Wrong address provided',
     'Customer refused to pay',
-    'Restaurant closed',
-    'Food quality issue',
-    'Delivery location inaccessible',
     'Customer phone unreachable',
     'Other'
   ];
@@ -162,10 +163,9 @@ const OrderDetailsScreen: React.FC = () => {
                 orderId: currentOrder.id, 
                 status: newStatus 
               })).unwrap();
-              Alert.alert('Success', 'Order status updated successfully');
               
-              // Refresh order details
-              dispatch(fetchOrderDetails(currentOrder.id));
+              // Show success message - order status is already updated optimistically in Redux
+              Alert.alert('Success', 'Order status updated successfully');
             } catch (error: any) {
               Alert.alert('Error', error || 'Failed to update order status');
             } finally {
@@ -198,8 +198,8 @@ const OrderDetailsScreen: React.FC = () => {
       resetPasscodeInputs();
       setIsVerifyingPasscode(false);
       
-      // Refresh order details
-      dispatch(fetchOrderDetails(currentOrder.id));
+      // Show success message - order status is already updated optimistically in Redux
+      Alert.alert('Success', 'Order delivered successfully!');
     } catch (error: any) {
       setPasscodeError(error || 'Failed to confirm delivery. Please verify the passcode with the customer.');
       setIsVerifyingPasscode(false);
@@ -234,17 +234,20 @@ const OrderDetailsScreen: React.FC = () => {
       await dispatch(updateOrderStatus({ 
         orderId: currentOrder.id, 
         status: 'cancelled',
-        cancellationReason: finalReason,
-        cancelledBy: 'rider',
-        cancelledAt: new Date().toISOString()
+        reason: finalReason.trim(),
       })).unwrap();
       
-      Alert.alert('Success', 'Order cancelled successfully');
+      // Close modal and reset form
       setShowCancelModal(false);
       setCancelReason('');
       setSelectedReason('');
+      setIsReasonInputFocused(false);
+      
+      // Show success message - order status is already updated optimistically in Redux
+      Alert.alert('Success', 'Order cancelled successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to cancel order');
+      const errorMessage = typeof error === 'string' ? error : 'Failed to cancel order';
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsUpdating(false);
     }
@@ -548,11 +551,11 @@ const OrderDetailsScreen: React.FC = () => {
               
               <View style={styles.paymentInfo}>
                 <Text variant="bodyMedium" style={styles.paymentMethod}>
-                  Payment: {currentOrder.payment_details?.method || 'Cash on Delivery'}
+                  Payment: {paymentMethod || 'Cash on Delivery'}
                 </Text>
-                {currentOrder.payment_details?.method !== 'cash' && currentOrder.payment_details?.transaction_id && (
+                {paymentMethod !== 'cash' && transactionId && (
                   <Text variant="bodySmall" style={styles.transactionId}>
-                    Transaction ID: {currentOrder.payment_details.transaction_id}
+                    Transaction ID: {transactionId}
                   </Text>
                 )}
               </View>
@@ -668,76 +671,81 @@ const OrderDetailsScreen: React.FC = () => {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
           <View style={styles.modalContent}>
-            {isVerifyingPasscode ? (
-              <View style={styles.passcodeLoader}>
-                <ActivityIndicator size="large" color={COLORS.PRIMARY_RED} />
-                <Text style={styles.passcodeLoaderText}>Verifying passcode...</Text>
-              </View>
-            ) : (
-              <>
-                <Text variant="headlineSmall" style={styles.modalTitle}>
-                  Enter Delivery Passcode
-                </Text>
-                <Text variant="bodyMedium" style={styles.modalSubtitle}>
-                  Please ask the customer for their 4-digit delivery passcode to confirm delivery:
-                </Text>
+            <View style={styles.modalHeader}>
+              <Text variant="headlineSmall" style={styles.modalTitle}>
+                Enter Delivery Passcode
+              </Text>
+              <IconButton
+                icon="close"
+                iconColor={COLORS.TEXT_SECONDARY}
+                size={24}
+                onPress={() => {
+                  setShowPasscodeModal(false);
+                  resetPasscodeInputs();
+                }}
+                disabled={isVerifyingPasscode}
+                style={styles.modalCloseButton}
+              />
+            </View>
+            <Text variant="bodyMedium" style={styles.modalSubtitle}>
+              Please ask the customer for their 4-digit delivery passcode to confirm delivery:
+            </Text>
 
-                <View style={styles.passcodeContainer}>
-                  <View style={styles.passcodeInputsWrapper}>
-                    {passcodeDigits.map((digit, index) => (
-                      <TextInput
-                        key={`passcode-${index}`}
-                        ref={(ref) => {
-                          passcodeInputRefs.current[index] = ref;
-                        }}
-                        style={[
-                          styles.passcodeBox,
-                          digit ? styles.passcodeBoxFilled : undefined,
-                        ]}
-                        value={digit}
-                        onChangeText={(value) => handlePasscodeInput(value, index)}
-                        onKeyPress={({ nativeEvent }) =>
-                          handlePasscodeKeyPress(nativeEvent.key, index)
-                        }
-                        keyboardType="number-pad"
-                        maxLength={1}
-                        textAlign="center"
-                        returnKeyType="done"
-                      />
-                    ))}
-                  </View>
-                  <Text variant="bodySmall" style={styles.passcodeHint}>
-                    Enter the 4-digit code provided by the customer
-                  </Text>
-                  {passcodeError ? (
-                    <Text style={styles.passcodeError}>{passcodeError}</Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.modalButtons}>
-                  <Button
-                    mode="outlined"
-                    onPress={() => {
-                      setShowPasscodeModal(false);
-                      resetPasscodeInputs();
+            <View style={styles.passcodeContainer}>
+              <View style={[
+                styles.passcodeInputsWrapper,
+                isVerifyingPasscode && styles.passcodeInputsDisabled
+              ]}>
+                {passcodeDigits.map((digit, index) => (
+                  <TextInput
+                    key={`passcode-${index}`}
+                    ref={(ref) => {
+                      passcodeInputRefs.current[index] = ref;
                     }}
-                    style={styles.modalButton}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    mode="contained"
-                    icon="check-circle"
-                    onPress={handleConfirmDeliveryWithPasscode}
-                    style={[styles.modalButton, styles.confirmButton]}
-                    labelStyle={styles.modalConfirmLabel}
-                    disabled={deliveryPasscode.length !== 4}
-                  >
-                    Delivered
-                  </Button>
+                    style={[
+                      styles.passcodeBox,
+                      digit ? styles.passcodeBoxFilled : undefined,
+                      isVerifyingPasscode && styles.passcodeBoxDisabled,
+                    ]}
+                    value={digit}
+                    onChangeText={(value) => handlePasscodeInput(value, index)}
+                    onKeyPress={({ nativeEvent }) =>
+                      handlePasscodeKeyPress(nativeEvent.key, index)
+                    }
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    textAlign="center"
+                    returnKeyType="done"
+                    editable={!isVerifyingPasscode}
+                  />
+                ))}
+              </View>
+              <Text variant="bodySmall" style={styles.passcodeHint}>
+                Enter the 4-digit code provided by the customer
+              </Text>
+              {isVerifyingPasscode && (
+                <View style={styles.passcodeLoader}>
+                  <ActivityIndicator size="small" color={COLORS.PRIMARY_RED} />
+                  <Text style={styles.passcodeLoaderText}>Verifying passcode...</Text>
                 </View>
-              </>
-            )}
+              )}
+              {passcodeError ? (
+                <Text style={styles.passcodeError}>{passcodeError}</Text>
+              ) : null}
+            </View>
+
+            <View style={styles.modalButtons}>
+              <Button
+                mode="contained"
+                icon="check-circle"
+                onPress={handleConfirmDeliveryWithPasscode}
+                style={styles.confirmButtonFullWidth}
+                labelStyle={styles.modalConfirmLabel}
+                disabled={deliveryPasscode.length !== 4 || isVerifyingPasscode}
+              >
+                Delivered
+              </Button>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -747,18 +755,37 @@ const OrderDetailsScreen: React.FC = () => {
         visible={showCancelModal}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setShowCancelModal(false)}
+        onRequestClose={() => {
+          setShowCancelModal(false);
+          setSelectedReason('');
+          setCancelReason('');
+          setIsReasonInputFocused(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text variant="headlineSmall" style={styles.modalTitle}>
-              Cancel Order
-            </Text>
+            <View style={styles.modalHeader}>
+              <Text variant="headlineSmall" style={styles.modalTitle}>
+                Cancel Order
+              </Text>
+              <IconButton
+                icon="close"
+                iconColor={COLORS.TEXT_SECONDARY}
+                size={24}
+                onPress={() => {
+                  setShowCancelModal(false);
+                  setSelectedReason('');
+                  setCancelReason('');
+                  setIsReasonInputFocused(false);
+                }}
+                style={styles.modalCloseButton}
+              />
+            </View>
             <Text variant="bodyMedium" style={styles.modalSubtitle}>
               Please provide a reason for cancelling this order:
             </Text>
 
-            <ScrollView style={styles.reasonsContainer}>
+            <View style={styles.reasonsContainer}>
               {defaultCancelReasons.map((reason, index) => (
                 <TouchableOpacity
                   key={index}
@@ -776,39 +803,42 @@ const OrderDetailsScreen: React.FC = () => {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
 
             {selectedReason === 'Other' && (
-              <TextInput
-                style={styles.customReasonInput}
-                placeholder="Please specify the reason..."
-                value={cancelReason}
-                onChangeText={setCancelReason}
-                multiline
-                numberOfLines={3}
-              />
+              <View style={styles.otherReasonContainer}>
+                <Text variant="bodyMedium" style={styles.otherReasonLabel}>
+                  Specify Reason
+                </Text>
+                <TextInput
+                  style={[
+                    styles.customReasonInput,
+                    isReasonInputFocused && styles.customReasonInputFocused
+                  ]}
+                  placeholder="Please provide details about why you're cancelling this order..."
+                  placeholderTextColor={COLORS.TEXT_LIGHT}
+                  value={cancelReason}
+                  onChangeText={setCancelReason}
+                  onFocus={() => setIsReasonInputFocused(true)}
+                  onBlur={() => setIsReasonInputFocused(false)}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
             )}
 
             <View style={styles.modalButtons}>
               <Button
-                mode="outlined"
-                onPress={() => {
-                  setShowCancelModal(false);
-                  setSelectedReason('');
-                  setCancelReason('');
-                }}
-                style={styles.modalButton}
-              >
-                Cancel
-              </Button>
-              <Button
                 mode="contained"
+                icon="check-circle"
                 onPress={handleConfirmCancellation}
-                style={[styles.modalButton, styles.confirmButton]}
+                style={styles.confirmButtonFullWidth}
+                labelStyle={styles.modalConfirmLabel}
                 loading={isUpdating}
                 disabled={isUpdating}
               >
-                Confirm Cancellation
+                Confirm
               </Button>
             </View>
           </View>
@@ -1139,12 +1169,14 @@ const styles = StyleSheet.create({
   primaryActionLabel: {
     color: COLORS.WHITE,
     fontWeight: '700',
+    fontSize: 17,
     letterSpacing: 0.5,
     fontFamily: 'System',
   },
   cancelActionLabel: {
     color: COLORS.PRIMARY_RED,
     fontWeight: '600',
+    fontSize: 17,
     fontFamily: 'System',
   },
   bottomSpacing: {
@@ -1164,14 +1196,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '85%',
+    minHeight: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   modalTitle: {
     color: COLORS.TEXT_PRIMARY,
     fontWeight: '700',
+    flex: 1,
     textAlign: 'center',
-    marginBottom: 8,
     fontFamily: 'System',
+  },
+  modalCloseButton: {
+    margin: 0,
   },
   modalSubtitle: {
     color: COLORS.TEXT_SECONDARY,
@@ -1180,60 +1222,115 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
   },
   reasonsContainer: {
-    maxHeight: 200,
     marginBottom: 20,
   },
   reasonOption: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: COLORS.LIGHT_GRAY,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: COLORS.WHITE,
+    borderWidth: 2,
+    borderColor: COLORS.LIGHT_GRAY,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   reasonOptionSelected: {
     backgroundColor: COLORS.PRIMARY_RED,
     borderColor: COLORS.PRIMARY_RED,
+    borderWidth: 2,
+    shadowColor: COLORS.PRIMARY_RED,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   reasonText: {
     color: COLORS.TEXT_PRIMARY,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '600',
     fontFamily: 'System',
   },
   reasonTextSelected: {
     color: COLORS.WHITE,
     fontWeight: '600',
+    fontSize: 17,
+  },
+  otherReasonContainer: {
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  otherReasonLabel: {
+    color: COLORS.TEXT_PRIMARY,
+    fontWeight: '600',
+    fontSize: 17,
+    marginBottom: 8,
+    fontFamily: 'System',
   },
   customReasonInput: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.LIGHT_GRAY,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-    fontSize: 14,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
     fontFamily: 'System',
     textAlignVertical: 'top',
+    backgroundColor: COLORS.WHITE,
+    color: COLORS.TEXT_PRIMARY,
+    minHeight: 100,
+    shadowColor: COLORS.BLACK,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  customReasonInputFocused: {
+    borderColor: COLORS.PRIMARY_RED,
+    backgroundColor: '#FFF9F9',
+    shadowColor: COLORS.PRIMARY_RED,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   modalButtons: {
     flexDirection: 'row',
     gap: 12,
+    marginTop: 8,
   },
   modalButton: {
     flex: 1,
     borderRadius: 12,
   },
+  modalCancelButton: {
+    borderColor: COLORS.PRIMARY_RED,
+    borderWidth: 2,
+  },
   confirmButton: {
     backgroundColor: COLORS.PRIMARY_RED,
   },
+  confirmButtonFullWidth: {
+    backgroundColor: COLORS.PRIMARY_RED,
+    borderRadius: 12,
+    width: '100%',
+  },
+  modalCancelLabel: {
+    color: COLORS.PRIMARY_RED,
+    fontWeight: '600',
+    fontSize: 17,
+    letterSpacing: 0.5,
+    fontFamily: 'System',
+  },
   modalConfirmLabel: {
     color: COLORS.WHITE,
-    fontWeight: '700',
+    fontWeight: '600',
+    fontSize: 17,
     letterSpacing: 0.5,
     fontFamily: 'System',
   },
   passcodeContainer: {
-    marginVertical: 20,
+    marginTop: 20,
+    marginBottom: 8,
     alignItems: 'center',
   },
   passcodeInputsWrapper: {
@@ -1241,6 +1338,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     marginBottom: 12,
+  },
+  passcodeInputsDisabled: {
+    opacity: 0.6,
   },
   passcodeBox: {
     width: 56,
@@ -1266,6 +1366,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.PRIMARY_RED,
     shadowOpacity: 0.2,
   },
+  passcodeBoxDisabled: {
+    opacity: 0.5,
+  },
   passcodeHint: {
     color: COLORS.TEXT_SECONDARY,
     textAlign: 'center',
@@ -1282,15 +1385,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   passcodeLoader: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 32,
+    marginTop: 12,
+    marginBottom: 8,
+    gap: 8,
   },
   passcodeLoaderText: {
-    marginTop: 16,
-    color: COLORS.TEXT_PRIMARY,
-    fontSize: 16,
+    color: COLORS.PRIMARY_RED,
+    fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'System',
   },
 });
 
