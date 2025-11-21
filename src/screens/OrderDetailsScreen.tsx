@@ -19,7 +19,6 @@ import {
   Text,
   Card,
   Surface,
-  Chip,
   Avatar,
   Button,
   Divider,
@@ -31,6 +30,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { RootState, AppDispatch } from '../store';
 import { fetchOrderDetails, updateOrderStatus, confirmDelivery } from '../store/slices/orderSlice';
 import { COLORS } from '../constants';
+import StatusChip from '../components/StatusChip';
 import { Order } from '../types';
 
 const OrderDetailsScreen: React.FC = () => {
@@ -279,63 +279,6 @@ const OrderDetailsScreen: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return COLORS.PRIMARY_YELLOW;
-      case 'preparing':
-        return COLORS.PRIMARY_YELLOW;
-      case 'ready':
-        return COLORS.PRIMARY_RED;
-      case 'on_the_way':
-        return COLORS.PRIMARY_RED;
-      case 'delivered':
-        return COLORS.SUCCESS;
-      case 'cancelled':
-        return COLORS.PRIMARY_RED;
-      default:
-        return COLORS.GRAY;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'clock-outline';
-      case 'preparing':
-        return 'food';
-      case 'ready':
-        return 'check-circle';
-      case 'on_the_way':
-        return 'bike';
-      case 'delivered':
-        return 'check-all';
-      case 'cancelled':
-        return 'close-circle';
-      default:
-        return 'help-circle';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Pending';
-      case 'preparing':
-        return 'Preparing';
-      case 'ready':
-        return 'Ready';
-      case 'on_the_way':
-        return 'On the Way';
-      case 'delivered':
-        return 'Delivered';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  };
-
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { 
       year: 'numeric', 
@@ -415,13 +358,7 @@ const OrderDetailsScreen: React.FC = () => {
                 </Text>
               </View>
               
-              <Chip
-                icon={getStatusIcon(currentOrder.status)}
-                style={[styles.statusChip, { backgroundColor: getStatusColor(currentOrder.status) }]}
-                textStyle={styles.statusChipText}
-              >
-                {getStatusText(currentOrder.status)}
-              </Chip>
+              <StatusChip status={currentOrder.status} />
             </View>
 
             <Divider style={styles.sectionDivider} />
@@ -925,16 +862,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
     fontFamily: 'System',
-  },
-  statusChip: {
-    borderRadius: 20,
-    height: 36,
-    alignSelf: 'flex-start',
-  },
-  statusChipText: {
-    color: COLORS.WHITE,
-    fontSize: 14,
-    fontWeight: '600',
   },
   
   // Section Styles

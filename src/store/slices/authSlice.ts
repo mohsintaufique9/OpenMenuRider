@@ -4,6 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../../services/api';
 import { AuthState, Rider } from '../../types';
 
+const normalizeRider = (rider: Rider): Rider => ({
+  ...rider,
+  vehicle_registration_number: rider.vehicle_registration_number
+    ? rider.vehicle_registration_number.toUpperCase()
+    : rider.vehicle_registration_number,
+});
+
 const initialState: AuthState = {
   isAuthenticated: false,
   rider: null,
@@ -24,12 +31,13 @@ export const login = createAsyncThunk(
       // Check if login was successful
       if (response.data.success) {
         const { token, rider } = response.data;
+        const normalizedRider = normalizeRider(rider);
         
         // Store token and rider data
         await AsyncStorage.setItem('auth_token', token);
-        await AsyncStorage.setItem('rider_data', JSON.stringify(rider));
+        await AsyncStorage.setItem('rider_data', JSON.stringify(normalizedRider));
         
-        return { token, rider };
+        return { token, rider: normalizedRider };
       } else {
         // Convert backend error messages to mobile-friendly messages
         const backendMessage = response.data.message || 'Login failed';
@@ -100,7 +108,11 @@ export const loadStoredAuth = createAsyncThunk(
       
       if (token && riderData) {
         const rider = JSON.parse(riderData);
-        return { token, rider };
+        const normalizedRider = normalizeRider(rider);
+        if (normalizedRider.vehicle_registration_number !== rider.vehicle_registration_number) {
+          await AsyncStorage.setItem('rider_data', JSON.stringify(normalizedRider));
+        }
+        return { token, rider: normalizedRider };
       }
       
       return null;
@@ -114,8 +126,13 @@ export const updateProfile = createAsyncThunk(
   'auth/updateProfile',
   async (profileData: Partial<Rider>, { rejectWithValue }) => {
     try {
-      const response = await ApiService.updateProfile(profileData);
-      const rider = response.data.rider;
+      const updatedData: Partial<Rider> = { ...profileData };
+      if (updatedData.vehicle_registration_number) {
+        updatedData.vehicle_registration_number = updatedData.vehicle_registration_number.toUpperCase();
+      }
+
+      const response = await ApiService.updateProfile(updatedData);
+      const rider = normalizeRider(response.data.rider);
       
       // Update stored rider data
       await AsyncStorage.setItem('rider_data', JSON.stringify(rider));

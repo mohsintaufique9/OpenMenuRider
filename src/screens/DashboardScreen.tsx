@@ -9,12 +9,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   Text,
   Card,
   Surface,
-  Chip,
   Avatar,
   Badge,
   IconButton,
@@ -31,6 +30,7 @@ import { logout } from '../store/slices/authSlice';
 import { COLORS, SCREEN_NAMES } from '../constants';
 import { Order } from '../types';
 import OpenMenuLogo from '../components/OpenMenuLogo';
+import StatusChip from '../components/StatusChip';
 
 const DashboardScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -90,75 +90,21 @@ const DashboardScreen: React.FC = () => {
     );
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return COLORS.PRIMARY_YELLOW;
-      case 'preparing':
-        return COLORS.PRIMARY_YELLOW;
-      case 'ready':
-        return COLORS.PRIMARY_RED;
-      case 'on_the_way':
-        return COLORS.PRIMARY_RED;
-      case 'delivered':
-        return COLORS.SUCCESS;
-      case 'cancelled':
-        return COLORS.PRIMARY_RED;
-      default:
-        return COLORS.GRAY;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'clock-outline';
-      case 'preparing':
-        return 'food';
-      case 'ready':
-        return 'check-circle';
-      case 'on_the_way':
-        return 'bike';
-      case 'delivered':
-        return 'check-all';
-      case 'cancelled':
-        return 'close-circle';
-      default:
-        return 'help-circle';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Pending';
-      case 'preparing':
-        return 'Preparing';
-      case 'ready':
-        return 'Ready';
-      case 'on_the_way':
-        return 'On the Way';
-      case 'delivered':
-        return 'Delivered';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  };
-
   const activeOrders = orders.filter(order => 
     ['pending', 'preparing', 'ready', 'on_the_way'].includes(order.status)
   );
 
-  const todayDeliveries = orders.filter(order => 
-    order.status === 'delivered' && 
-    new Date(order.created_at).toDateString() === new Date().toDateString()
+  // Order stats
+  const pendingCount = orders.filter(order => 
+    ['pending', 'preparing', 'ready', 'on_the_way'].includes(order.status)
   ).length;
 
-  const todayPending = orders.filter(order => 
-    order.status === 'pending' && 
-    new Date(order.created_at).toDateString() === new Date().toDateString()
+  const deliveredCount = orders.filter(order => 
+    order.status === 'delivered'
+  ).length;
+
+  const cancelledCount = orders.filter(order => 
+    order.status === 'cancelled'
   ).length;
 
   return (
@@ -209,9 +155,25 @@ const DashboardScreen: React.FC = () => {
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <Text variant="headlineSmall" style={styles.sectionTitle}>
-            Today's Overview
+            Order Statistics
           </Text>
           <View style={styles.statsContainer}>
+            <Card style={styles.statCard} mode="elevated" elevation={2}>
+              <Card.Content style={styles.statContent}>
+                <View style={styles.statIconContainer}>
+                  <View style={[styles.statIconBackground, { backgroundColor: COLORS.PRIMARY_YELLOW }]}>
+                    <Ionicons name="time-outline" size={24} color={COLORS.WHITE} />
+                  </View>
+                </View>
+                <Text variant="headlineMedium" style={styles.statNumber}>
+                  {pendingCount}
+                </Text>
+                <Text variant="bodyMedium" style={styles.statLabel}>
+                  Pending
+                </Text>
+              </Card.Content>
+            </Card>
+
             <Card style={styles.statCard} mode="elevated" elevation={2}>
               <Card.Content style={styles.statContent}>
                 <View style={styles.statIconContainer}>
@@ -220,10 +182,10 @@ const DashboardScreen: React.FC = () => {
                   </View>
                 </View>
                 <Text variant="headlineMedium" style={styles.statNumber}>
-                  {todayDeliveries}
+                  {deliveredCount}
                 </Text>
                 <Text variant="bodyMedium" style={styles.statLabel}>
-                  Delivered Today
+                  Delivered
                 </Text>
               </Card.Content>
             </Card>
@@ -231,15 +193,15 @@ const DashboardScreen: React.FC = () => {
             <Card style={styles.statCard} mode="elevated" elevation={2}>
               <Card.Content style={styles.statContent}>
                 <View style={styles.statIconContainer}>
-                  <View style={[styles.statIconBackground, { backgroundColor: COLORS.PRIMARY_YELLOW }]}>
-                    <Ionicons name="time" size={24} color={COLORS.WHITE} />
+                  <View style={[styles.statIconBackground, { backgroundColor: COLORS.PRIMARY_RED }]}>
+                    <MaterialCommunityIcons name="close-octagon-outline" size={24} color={COLORS.WHITE} />
                   </View>
                 </View>
                 <Text variant="headlineMedium" style={styles.statNumber}>
-                  {todayPending}
+                  {cancelledCount}
                 </Text>
                 <Text variant="bodyMedium" style={styles.statLabel}>
-                  Pending Today
+                  Cancelled
                 </Text>
               </Card.Content>
             </Card>
@@ -313,14 +275,7 @@ const DashboardScreen: React.FC = () => {
                         {new Date(order.created_at).toLocaleTimeString()}
                       </Text>
                     </View>
-                    <Chip
-                      icon={getStatusIcon(order.status)}
-                      style={[styles.statusChip, { backgroundColor: getStatusColor(order.status) }]}
-                      textStyle={styles.statusChipText}
-                      compact
-                    >
-                      {getStatusText(order.status)}
-                    </Chip>
+                    <StatusChip status={order.status} />
                   </View>
 
                   {/* Restaurant & Customer Info */}
@@ -331,7 +286,7 @@ const DashboardScreen: React.FC = () => {
                       </View>
                       <View style={styles.infoContent}>
                         <Text variant="bodySmall" style={styles.infoLabel}>
-                          Restaurant
+                          Restaurant Name
                         </Text>
                         <Text variant="bodyMedium" style={styles.infoValue}>
                           {order.restaurant?.name || 'N/A'}
@@ -345,7 +300,7 @@ const DashboardScreen: React.FC = () => {
                       </View>
                       <View style={styles.infoContent}>
                         <Text variant="bodySmall" style={styles.infoLabel}>
-                          Customer
+                          Customer Details
                         </Text>
                         <Text variant="bodyMedium" style={styles.infoValue}>
                           {order.delivery_details?.name || 'N/A'}
@@ -359,7 +314,7 @@ const DashboardScreen: React.FC = () => {
                       </View>
                       <View style={styles.infoContent}>
                         <Text variant="bodySmall" style={styles.infoLabel}>
-                          Total Amount
+                          Order Total
                         </Text>
                         <Text variant="titleMedium" style={styles.orderTotal}>
                           Rs. {Number(order.total || 0).toFixed(2)}
@@ -385,59 +340,6 @@ const DashboardScreen: React.FC = () => {
               </TouchableOpacity>
             ))
           )}
-        </View>
-
-        {/* Quick Actions Section */}
-        <View style={styles.actionsSection}>
-          <Text variant="headlineSmall" style={styles.sectionTitle}>
-            Quick Actions
-          </Text>
-          
-          <View style={styles.actionsContainer}>
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.PRIMARY_RED }]}>
-                  <Ionicons name="time-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Order History
-                </Text>
-              </Card.Content>
-            </Card>
-
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.SUCCESS }]}>
-                  <Ionicons name="person-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Profile
-                </Text>
-              </Card.Content>
-            </Card>
-
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.PRIMARY_YELLOW }]}>
-                  <Ionicons name="settings-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Settings
-                </Text>
-              </Card.Content>
-            </Card>
-
-            <Card style={styles.actionCard} mode="elevated" elevation={2}>
-              <Card.Content style={styles.actionContent}>
-                <View style={[styles.actionIconContainer, { backgroundColor: COLORS.TEXT_SECONDARY }]}>
-                  <Ionicons name="help-circle-outline" size={24} color={COLORS.WHITE} />
-                </View>
-                <Text variant="bodyMedium" style={styles.actionText}>
-                  Help & Support
-                </Text>
-              </Card.Content>
-            </Card>
-          </View>
         </View>
 
         <View style={styles.bottomSpacing} />
@@ -635,15 +537,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'System',
   },
-  statusChip: {
-    borderRadius: 20,
-    height: 32,
-  },
-  statusChipText: {
-    color: COLORS.WHITE,
-    fontSize: 12,
-    fontWeight: '600',
-  },
   orderInfoSection: {
     marginBottom: 16,
   },
@@ -718,39 +611,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
-  },
-  actionsSection: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  actionCard: {
-    width: '47%',
-    borderRadius: 16,
-    backgroundColor: COLORS.WHITE,
-  },
-  actionContent: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  actionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  actionText: {
-    color: COLORS.TEXT_PRIMARY,
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 14,
-    fontFamily: 'System',
   },
   bottomSpacing: {
     height: 100,

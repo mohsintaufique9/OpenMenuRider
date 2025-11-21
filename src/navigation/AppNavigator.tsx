@@ -15,6 +15,7 @@ import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
+import OrderHistoryScreen from '../screens/OrderHistoryScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -28,6 +29,8 @@ const MainTabNavigator: React.FC = () => {
 
           if (route.name === SCREEN_NAMES.DASHBOARD) {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === SCREEN_NAMES.ORDER_HISTORY) {
+            iconName = focused ? 'receipt' : 'receipt-outline';
           } else if (route.name === SCREEN_NAMES.PROFILE) {
             iconName = focused ? 'person' : 'person-outline';
           } else {
@@ -47,9 +50,12 @@ const MainTabNavigator: React.FC = () => {
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,
-          paddingBottom: Platform.OS === 'ios' ? 34 : 8, // Safe area padding for iOS
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 90 : 60, // Increased height for iOS
+          paddingBottom: Platform.OS === 'ios' ? 32 : 20,
+          paddingTop: 10,
+          height: Platform.OS === 'ios' ? 92 : 72,
+        },
+        tabBarSafeAreaInset: {
+          bottom: Platform.OS === 'ios' ? 0 : 16,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -63,6 +69,13 @@ const MainTabNavigator: React.FC = () => {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Dashboard',
+        }}
+      />
+      <Tab.Screen 
+        name={SCREEN_NAMES.ORDER_HISTORY} 
+        component={OrderHistoryScreen}
+        options={{
+          tabBarLabel: 'History',
         }}
       />
       <Tab.Screen 

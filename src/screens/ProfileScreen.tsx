@@ -18,12 +18,12 @@ import {
   Divider,
   IconButton,
   ActivityIndicator,
-  Chip,
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { logout } from '../store/slices/authSlice';
 import { COLORS } from '../constants';
+import StatusChip from '../components/StatusChip';
 
 const ProfileScreen: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -110,13 +110,11 @@ const ProfileScreen: React.FC = () => {
             <Text variant="bodyLarge" style={styles.profilePhone}>
               {rider.phone_number}
             </Text>
-            <Chip
-              icon="check-circle"
+            <StatusChip
+              status="active_rider"
+              compact={false}
               style={styles.statusChip}
-              textStyle={styles.statusChipText}
-            >
-              Active Rider
-            </Chip>
+            />
           </Card.Content>
         </Card>
 
@@ -216,7 +214,7 @@ const ProfileScreen: React.FC = () => {
                   Registration
                 </Text>
                 <Text variant="bodyMedium" style={styles.infoValue}>
-                  {rider.vehicle_registration_number}
+                  {rider.vehicle_registration_number?.toUpperCase() || ''}
                 </Text>
               </View>
             </View>
@@ -372,13 +370,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   statusChip: {
-    backgroundColor: COLORS.SUCCESS,
-    borderRadius: 20,
-  },
-  statusChipText: {
-    color: COLORS.WHITE,
-    fontSize: 12,
-    fontWeight: 'bold',
+    alignSelf: 'center',
+    marginTop: 4,
   },
   sectionCard: {
     margin: 12,
@@ -397,7 +390,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: COLORS.TEXT_PRIMARY,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    fontSize: 18,
+    letterSpacing: 0.3,
     marginBottom: 12,
     paddingHorizontal: 4,
   },
@@ -420,10 +415,12 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_SECONDARY,
     marginBottom: 1,
     fontSize: 12,
+    fontWeight: '600',
   },
   infoValue: {
     color: COLORS.TEXT_PRIMARY,
     fontSize: 14,
+    fontWeight: '600',
   },
   divider: {
     marginVertical: 4,
