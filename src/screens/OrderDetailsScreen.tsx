@@ -260,15 +260,25 @@ const OrderDetailsScreen: React.FC = () => {
   };
 
   const handleCallRestaurant = () => {
-    if (currentOrder?.restaurant?.phone) {
-      Linking.openURL(`tel:${currentOrder.restaurant.phone}`);
+    const phone = currentOrder?.restaurant?.phone || currentOrder?.restaurant?.phone_number;
+    if (phone) {
+      Linking.openURL(`tel:${phone}`);
     }
   };
 
   const handleNavigateToRestaurant = () => {
     if (currentOrder?.restaurant?.address) {
-      const address = encodeURIComponent(currentOrder.restaurant.address);
-      Linking.openURL(`https://maps.google.com/maps?q=${address}`);
+      const address = currentOrder.restaurant.address;
+      // Check if address is an object with lat/lng
+      if (typeof address === 'object' && address.lat && address.lng) {
+        Linking.openURL(`https://maps.google.com/maps?q=${address.lat},${address.lng}`);
+      } else if (typeof address === 'object' && address.full_address) {
+        // Use full_address if lat/lng not available
+        Linking.openURL(`https://maps.google.com/maps?q=${encodeURIComponent(address.full_address)}`);
+      } else if (typeof address === 'string') {
+        // Fallback for string address (backward compatibility)
+        Linking.openURL(`https://maps.google.com/maps?q=${encodeURIComponent(address)}`);
+      }
     }
   };
 
@@ -376,7 +386,7 @@ const OrderDetailsScreen: React.FC = () => {
                   <TouchableOpacity 
                     style={styles.actionButton} 
                     onPress={handleCallRestaurant}
-                    disabled={!currentOrder.restaurant?.phone}
+                    disabled={!currentOrder.restaurant?.phone && !currentOrder.restaurant?.phone_number}
                   >
                     <Ionicons name="call-outline" size={16} color={COLORS.PRIMARY_RED} />
                     <Text style={styles.actionButtonText}>Call</Text>
@@ -384,7 +394,10 @@ const OrderDetailsScreen: React.FC = () => {
                   <TouchableOpacity 
                     style={styles.actionButton} 
                     onPress={handleNavigateToRestaurant}
-                    disabled={!currentOrder.restaurant?.address}
+                    disabled={!currentOrder.restaurant?.address || 
+                      (typeof currentOrder.restaurant.address === 'object' && 
+                       !currentOrder.restaurant.address.full_address && 
+                       !currentOrder.restaurant.address.lat)}
                   >
                     <Ionicons name="navigate-outline" size={16} color={COLORS.PRIMARY_RED} />
                     <Text style={styles.actionButtonText}>Navigate</Text>
@@ -395,8 +408,17 @@ const OrderDetailsScreen: React.FC = () => {
               <Text variant="bodyLarge" style={styles.restaurantName}>
                 {currentOrder.restaurant?.name || 'N/A'}
               </Text>
+              {(currentOrder.restaurant?.phone || currentOrder.restaurant?.phone_number) && (
+                <Text variant="bodyMedium" style={styles.restaurantPhone}>
+                  {currentOrder.restaurant?.phone || currentOrder.restaurant?.phone_number}
+                </Text>
+              )}
               <Text variant="bodyMedium" style={styles.restaurantAddress}>
-                {currentOrder.restaurant?.address || 'Address not available'}
+                {currentOrder.restaurant?.address 
+                  ? (typeof currentOrder.restaurant.address === 'object' 
+                      ? currentOrder.restaurant.address.full_address || 'Address not available'
+                      : currentOrder.restaurant.address)
+                  : 'Address not available'}
               </Text>
             </View>
 
@@ -919,6 +941,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 17,
     marginBottom: 4,
+    fontFamily: 'System',
+  },
+  restaurantPhone: {
+    color: COLORS.TEXT_SECONDARY,
+    fontSize: 15,
+    marginBottom: 4,
+    fontWeight: '400',
     fontFamily: 'System',
   },
   restaurantAddress: {

@@ -17,7 +17,14 @@ export interface Rider {
 export interface Restaurant {
   id: number;
   name: string;
-  address: string;
+  address: string | {
+    full_address?: string;
+    lat?: number;
+    lng?: number;
+    street?: string;
+    city?: string;
+    state?: string;
+  };
   phone: string;
   phone_number?: string; // Added for compatibility
   latitude?: number;
