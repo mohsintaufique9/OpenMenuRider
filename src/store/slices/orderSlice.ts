@@ -38,10 +38,21 @@ export const fetchOrderDetails = createAsyncThunk(
 export const updateOrderStatus = createAsyncThunk(
   'order/updateOrderStatus',
   async ({ orderId, status, reason, deliveryPasscode }: { orderId: number; status: string; reason?: string; deliveryPasscode?: string }, { rejectWithValue }) => {
+    console.log('🔄 [Redux] updateOrderStatus - Action Called:');
+    console.log('📋 Parameters:', { orderId, status, reason, deliveryPasscode });
+    console.log('🔐 Delivery Passcode Type:', typeof deliveryPasscode);
+    console.log('🔐 Delivery Passcode Value:', deliveryPasscode);
+    console.log('🔐 Delivery Passcode Length:', deliveryPasscode?.length);
+    
     try {
       const response = await ApiService.updateOrderStatus(orderId, status, reason, deliveryPasscode);
+      console.log('✅ [Redux] updateOrderStatus - Success:', response);
       return { orderId, status, reason };
     } catch (error: any) {
+      console.error('❌ [Redux] updateOrderStatus - Error Caught:');
+      console.error('📡 Error Response:', error.response);
+      console.error('💬 Error Message:', error.response?.data?.message || error.message);
+      console.error('🔍 Full Error Object:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to update order status');
     }
   }

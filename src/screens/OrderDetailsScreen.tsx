@@ -185,15 +185,27 @@ const OrderDetailsScreen: React.FC = () => {
       return;
     }
 
+    console.log('🎯 [Screen] handleConfirmDeliveryWithPasscode - Starting:');
+    console.log('📦 Current Order:', currentOrder);
+    console.log('🆔 Order ID:', currentOrder.id);
+    console.log('🔐 Delivery Passcode:', deliveryPasscode);
+    console.log('🔐 Passcode Type:', typeof deliveryPasscode);
+    console.log('🔐 Passcode Length:', deliveryPasscode.length);
+    console.log('📊 Status to set:', 'delivered');
+
     setPasscodeError('');
     setIsVerifyingPasscode(true);
     try {
-      await dispatch(updateOrderStatus({ 
+      const actionPayload = { 
         orderId: currentOrder.id, 
         status: 'delivered',
         deliveryPasscode: deliveryPasscode
-      })).unwrap();
+      };
+      console.log('📤 [Screen] Dispatching updateOrderStatus with payload:', actionPayload);
+      
+      await dispatch(updateOrderStatus(actionPayload)).unwrap();
 
+      console.log('✅ [Screen] Delivery confirmed successfully');
       setShowPasscodeModal(false);
       resetPasscodeInputs();
       setIsVerifyingPasscode(false);
@@ -201,6 +213,10 @@ const OrderDetailsScreen: React.FC = () => {
       // Show success message - order status is already updated optimistically in Redux
       Alert.alert('Success', 'Order delivered successfully!');
     } catch (error: any) {
+      console.error('❌ [Screen] handleConfirmDeliveryWithPasscode - Error:');
+      console.error('💬 Error Message:', error);
+      console.error('🔍 Error Type:', typeof error);
+      console.error('📋 Full Error:', JSON.stringify(error, null, 2));
       setPasscodeError(error || 'Failed to confirm delivery. Please verify the passcode with the customer.');
       setIsVerifyingPasscode(false);
     }
@@ -237,13 +253,16 @@ const OrderDetailsScreen: React.FC = () => {
         reason: finalReason.trim(),
       })).unwrap();
       
+      // Refresh order details to get updated cancellation_reason
+      await dispatch(fetchOrderDetails(currentOrder.id)).unwrap();
+      
       // Close modal and reset form
       setShowCancelModal(false);
       setCancelReason('');
       setSelectedReason('');
       setIsReasonInputFocused(false);
       
-      // Show success message - order status is already updated optimistically in Redux
+      // Show success message
       Alert.alert('Success', 'Order cancelled successfully');
     } catch (error) {
       const errorMessage = typeof error === 'string' ? error : 'Failed to cancel order';
@@ -510,7 +529,9 @@ const OrderDetailsScreen: React.FC = () => {
               
               <View style={styles.paymentInfo}>
                 <Text variant="bodyMedium" style={styles.paymentMethod}>
-                  Payment: {paymentMethod || 'Cash on Delivery'}
+                  Payment: {paymentMethod && (paymentMethod.toLowerCase() === 'cod' || paymentMethod.toLowerCase() === 'cash' || paymentMethod.toLowerCase() === 'cash_on_delivery') 
+                    ? 'Cash on Delivery' 
+                    : (paymentMethod || 'Cash on Delivery')}
                 </Text>
                 {paymentMethod !== 'cash' && transactionId && (
                   <Text variant="bodySmall" style={styles.transactionId}>
@@ -584,12 +605,12 @@ const OrderDetailsScreen: React.FC = () => {
           )}
           
           {currentOrder.status === 'on_the_way' && (
-            <View style={styles.rowActions}>
+            <View style={styles.columnActions}>
               <Button
                 mode="contained"
                 icon="check-circle"
                 onPress={handleConfirmDelivery}
-                style={[styles.successActionButton, styles.halfWidthButton]}
+                style={styles.successActionButton}
                 labelStyle={styles.primaryActionLabel}
                 loading={isUpdating}
                 disabled={isUpdating}
@@ -600,7 +621,7 @@ const OrderDetailsScreen: React.FC = () => {
                 mode="outlined"
                 icon="close-circle"
                 onPress={handleCancelOrder}
-                style={[styles.cancelActionButton, styles.halfWidthButton]}
+                style={styles.cancelActionButton}
                 labelStyle={styles.cancelActionLabel}
                 loading={isUpdating}
                 disabled={isUpdating}
@@ -627,7 +648,7 @@ const OrderDetailsScreen: React.FC = () => {
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -1096,6 +1117,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  columnActions: {
+    flexDirection: 'column',
+    gap: 12,
+  },
   halfWidthButton: {
     flex: 1,
   },
@@ -1111,16 +1136,13 @@ const styles = StyleSheet.create({
   successActionButton: {
     backgroundColor: COLORS.PRIMARY_RED,
     borderRadius: 16,
-    shadowColor: COLORS.PRIMARY_RED,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    paddingHorizontal: 16,
   },
   cancelActionButton: {
     borderRadius: 16,
     borderColor: COLORS.PRIMARY_RED,
     borderWidth: 2,
+    paddingHorizontal: 16,
   },
   primaryActionLabel: {
     color: COLORS.WHITE,
@@ -1146,6 +1168,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    paddingTop: 120,
   },
   modalContent: {
     backgroundColor: COLORS.WHITE,

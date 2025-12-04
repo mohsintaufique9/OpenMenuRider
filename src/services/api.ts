@@ -92,12 +92,34 @@ class ApiService {
   }
 
   async updateOrderStatus(orderId: number, status: string, reason?: string, deliveryPasscode?: string) {
-    const response = await this.api.put(`/rider/orders/${orderId}/status`, {
+    const endpoint = `/rider/orders/${orderId}/status`;
+    const payload = {
       status,
       reason,
       delivery_passcode: deliveryPasscode,
-    });
-    return response.data;
+    };
+    const fullUrl = `${this.api.defaults.baseURL}${endpoint}`;
+    
+    console.log('🚀 [API] updateOrderStatus - Request Details:');
+    console.log('📍 Endpoint:', endpoint);
+    console.log('🌐 Full URL:', fullUrl);
+    console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+    console.log('🔑 Order ID:', orderId);
+    console.log('📊 Status:', status);
+    console.log('🔐 Delivery Passcode:', deliveryPasscode ? `"${deliveryPasscode}" (length: ${deliveryPasscode.length})` : 'undefined');
+    
+    try {
+      const response = await this.api.put(endpoint, payload);
+      console.log('✅ [API] updateOrderStatus - Success Response:', JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ [API] updateOrderStatus - Error Details:');
+      console.error('📡 Response Status:', error.response?.status);
+      console.error('📄 Response Data:', JSON.stringify(error.response?.data, null, 2));
+      console.error('💬 Error Message:', error.response?.data?.message || error.message);
+      console.error('🔍 Full Error:', error);
+      throw error;
+    }
   }
 
   async confirmDelivery(orderId: number, data: any, deliveryPasscode?: string) {
