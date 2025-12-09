@@ -625,7 +625,7 @@ const OrderDetailsScreen: React.FC = () => {
                 labelStyle={styles.cancelActionLabel}
                 loading={isUpdating}
                 disabled={isUpdating}
-              >
+              >◊CX
                 Cancel Order
               </Button>
             </View>

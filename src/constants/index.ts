@@ -1,7 +1,7 @@
 // src/constants/index.ts
-export const API_BASE_URL = 'https://staging-be.openmenu.pk/api/'; // Your Laravel backend
-export const PUSHER_KEY = 'your-pusher-key'; // Update with your Pusher key
-export const PUSHER_CLUSTER = 'your-pusher-cluster'; // Update with your Pusher cluster
+export const API_BASE_URL = 'https://om9bipc9o5.execute-api.us-east-1.amazonaws.com/api/'; // Your Laravel backend
+export const PUSHER_KEY = '42f1d31faaa5a2fafaee'; // Update with your Pusher key
+export const PUSHER_CLUSTER = 'ap1'; // Update with your Pusher cluster
 
 export const ORDER_STATUSES = {
   PENDING: 'pending',
