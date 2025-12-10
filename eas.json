@@ -1,6 +1,6 @@
 {
   "cli": {
-    "appVersionSource": "app-config"
+    "appVersionSource": "local"
   },
   "build": {
     "preview": {
@@ -24,7 +24,6 @@
         "buildType": "apk"
       },
       "ios": {
-        "workflow": "managed",
         "distribution": "store"
       }
     }
