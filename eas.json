@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "appVersionSource": "app-config"
+  },
   "build": {
     "preview": {
       "android": {
@@ -19,6 +22,10 @@
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "workflow": "managed",
+        "distribution": "store"
       }
     }
   }
