@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { ActivityIndicator, View, StyleSheet, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootState } from '../store';
 import { COLORS, SCREEN_NAMES } from '../constants';
 
@@ -21,6 +22,13 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabNavigator: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  
+  // Calculate dynamic padding and height based on safe area insets
+  // Ensure minimum padding for better touch targets
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 20 : 8);
+  const tabBarHeight = 60 + bottomPadding; // Base height (60) + safe area padding
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -50,12 +58,9 @@ const MainTabNavigator: React.FC = () => {
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,
-          paddingBottom: Platform.OS === 'ios' ? 32 : 20,
+          paddingBottom: bottomPadding,
           paddingTop: 10,
-          height: Platform.OS === 'ios' ? 92 : 72,
-        },
-        tabBarSafeAreaInset: {
-          bottom: Platform.OS === 'ios' ? 0 : 16,
+          height: tabBarHeight,
         },
         tabBarLabelStyle: {
           fontSize: 12,

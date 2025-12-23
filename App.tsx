@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Provider, useDispatch } from 'react-redux';
 import { PaperProvider, configureFonts, DefaultTheme } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StatusBar } from 'expo-status-bar';
@@ -111,11 +112,13 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <StatusBar style="dark" backgroundColor={COLORS.WHITE} />
-      <AppNavigator />
-      <Toast />
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider theme={theme}>
+        <StatusBar style="dark" backgroundColor={COLORS.WHITE} />
+        <AppNavigator />
+        <Toast />
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 };
 
